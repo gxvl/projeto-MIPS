@@ -3,115 +3,115 @@
 # Questão 1: O objetivo desta questão é implementar em assembly MIPS algumas funções da biblioteca “string.h” para linguagem C.
 
 .data
-src_str:    .asciiz "alan turing"
-dst_str:    .space 50
-concat_str: .space 100
-str1:   .asciiz "Palavra"
-str2:   .asciiz "Palavrinha"
-num:          .word 13
-newline:    .asciiz "\n"
-prompt_a:   .asciiz "Teste a)"
-prompt_b:   .asciiz "Teste b)"
-prompt_c:   .asciiz "Teste c)"
-prompt_d:   .asciiz "Teste d)"
-prompt_e:   .asciiz "Teste e)"
+    src_str:    .asciiz "alan turing"
+    dst_str:    .space 50
+    concat_str: .space 100
+    str1:   .asciiz "Palavra"
+    str2:   .asciiz "Palavrinha"
+    num:          .word 13
+    newline:    .asciiz "\n"
+    prompt_a:   .asciiz "Teste a)"
+    prompt_b:   .asciiz "Teste b)"
+    prompt_c:   .asciiz "Teste c)"
+    prompt_d:   .asciiz "Teste d)"
+    prompt_e:   .asciiz "Teste e)"
 
 .text
-main:
+    main:
     
- # Testando as funções
+     # Testando as funções
+        
+        li $v0, 4
+        la $a0, prompt_a # Imprime "Teste a)"
+        syscall
+        la $a0, newline # Quebra de linha
+        syscall
+        # Teste da função strcpy
+        la $a1, src_str   # Endereço da string de origem
+        la $a0, dst_str   # Endereço da string de destino
+        jal strcpy
+        li $v0, 4         # Syscall para imprimir string
+        la $a0, dst_str   # Carrega a string de destino para imprimir
+        syscall
+        la $a0, newline   # Carrega a quebra de linha para imprimir
+        syscall
     
-    li $v0, 4
-    la $a0, prompt_a # Imprime "Teste a)"
-    syscall
-    la $a0, newline # Quebra de linha
-    syscall
-    # Teste da função strcpy
-    la $a1, src_str   # Endereço da string de origem
-    la $a0, dst_str   # Endereço da string de destino
-    jal strcpy
-    li $v0, 4         # Syscall para imprimir string
-    la $a0, dst_str   # Carrega a string de destino para imprimir
-    syscall
-    la $a0, newline   # Carrega a quebra de linha para imprimir
-    syscall
-
-    li $v0, 4
-    la $a0, prompt_b # Imprime "Teste b)"
-    syscall
-    la $a0, newline # Quebra de linha
-    syscall
-
-    # Teste da função memcpy
-    la $a1, src_str   # Endereço da string de origem
-    la $a0, dst_str   # Endereço da string de destino
-    li $a2, 13        # Comprimento a ser copiado
-    jal memcpy
-    li $v0, 4         # Syscall para imprimir string
-    la $a0, dst_str   # Carrega a string de destino para imprimir
-    syscall
-    la $a0, newline   # Carrega a quebra de linha para imprimir
-    syscall
-
-    li $v0, 4
-    la $a0, prompt_c # Imprime "Teste c)"
-    syscall
-    la $a0, newline # Quebra de linha
-    syscall
-
-    # Teste da função strcmp
-    la $a0, str1  # String 1
-    la $a1, str2  # String 2
-    jal strcmp
-    move $a0, $v0     # Move o resultado para $a0 para imprimir
-    li $v0, 1         # Syscall para imprimir inteiro
-    syscall
-    la $a0, newline   # Carrega a quebra de linha para imprimir
-    syscall
-
-    li $v0, 4
-    la $a0, newline # Quebra de linha
-    syscall
-    la $a0, prompt_d # Imprime "Teste d)"
-    syscall
-    la $a0, newline # Quebra de linha
-    syscall
-
-    # Teste da função strncmp
-    la $a0, str1  # String 1
-    la $a1, str2  # String 2
-    lw $a3, num       # Número de caracteres a serem comparados
-    jal strncmp
-    move $a0, $v0     # Move o resultado para $a0 para imprimir
-    li $v0, 1         # Syscall para imprimir inteiro
-    syscall
-    la $a0, newline   # Carrega a quebra de linha para imprimir
-    syscall
-
-    li $v0, 4
-    la $a0, newline # Quebra de linha
-    syscall
-    la $a0, prompt_e # Imprime "Teste e)"
-    syscall
-    la $a0, newline # quebra de linha
-    syscall
-
-    # Teste da função strcat
-    la $a1, src_str   # String de origem
-    la $a0, concat_str # String de destino para concatenação
-    jal strcpy        # Copia a string de origem para a string de destino
-    la $a0, concat_str # Atualiza o endereço da string de destino concatenada
-    la $a1, src_str   # String de origem
-    jal strcat
-    li $v0, 4         # Syscall para imprimir string
-    la $a0, concat_str # Carrega a string concatenada para imprimir
-    syscall
-    la $a0, newline   # Carrega a quebra de linha para imprimir
-    syscall
-
-    # Sair
-    li $v0, 10
-    syscall
+        li $v0, 4
+        la $a0, prompt_b # Imprime "Teste b)"
+        syscall
+        la $a0, newline # Quebra de linha
+        syscall
+    
+        # Teste da função memcpy
+        la $a1, src_str   # Endereço da string de origem
+        la $a0, dst_str   # Endereço da string de destino
+        li $a2, 13        # Comprimento a ser copiado
+        jal memcpy
+        li $v0, 4         # Syscall para imprimir string
+        la $a0, dst_str   # Carrega a string de destino para imprimir
+        syscall
+        la $a0, newline   # Carrega a quebra de linha para imprimir
+        syscall
+    
+        li $v0, 4
+        la $a0, prompt_c # Imprime "Teste c)"
+        syscall
+        la $a0, newline # Quebra de linha
+        syscall
+    
+        # Teste da função strcmp
+        la $a0, str1  # String 1
+        la $a1, str2  # String 2
+        jal strcmp
+        move $a0, $v0     # Move o resultado para $a0 para imprimir
+        li $v0, 1         # Syscall para imprimir inteiro
+        syscall
+        la $a0, newline   # Carrega a quebra de linha para imprimir
+        syscall
+    
+        li $v0, 4
+        la $a0, newline # Quebra de linha
+        syscall
+        la $a0, prompt_d # Imprime "Teste d)"
+        syscall
+        la $a0, newline # Quebra de linha
+        syscall
+    
+        # Teste da função strncmp
+        la $a0, str1  # String 1
+        la $a1, str2  # String 2
+        lw $a3, num       # Número de caracteres a serem comparados
+        jal strncmp
+        move $a0, $v0     # Move o resultado para $a0 para imprimir
+        li $v0, 1         # Syscall para imprimir inteiro
+        syscall
+        la $a0, newline   # Carrega a quebra de linha para imprimir
+        syscall
+    
+        li $v0, 4
+        la $a0, newline # Quebra de linha
+        syscall
+        la $a0, prompt_e # Imprime "Teste e)"
+        syscall
+        la $a0, newline # quebra de linha
+        syscall
+    
+        # Teste da função strcat
+        la $a1, src_str   # String de origem
+        la $a0, concat_str # String de destino para concatenação
+        jal strcpy        # Copia a string de origem para a string de destino
+        la $a0, concat_str # Atualiza o endereço da string de destino concatenada
+        la $a1, src_str   # String de origem
+        jal strcat
+        li $v0, 4         # Syscall para imprimir string
+        la $a0, concat_str # Carrega a string concatenada para imprimir
+        syscall
+        la $a0, newline   # Carrega a quebra de linha para imprimir
+        syscall
+    
+        # Sair
+        li $v0, 10
+        syscall
     
  #=============================================================================================
  
