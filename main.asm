@@ -1,3 +1,7 @@
+# Arquitetura e Organizacao de Computadores: 1VA
+# Grupo: Anthony Guerra, Geraldo Goncalves, Paulo Veloso e Rodrigo Souza
+# Projeto: Implementar um sistema de gerenciamento para um restaurante, operado atraves de um terminal que interpreta comandos de texto.
+
 .data 
 
 	itens_memoria: .space 400
