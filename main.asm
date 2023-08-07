@@ -6,7 +6,7 @@
 
 	itens_memoria: .space 400
 	mesas_memoria: .space 4635
-	cmd_1: .asciiz "tst"
+	cmd_1: .asciiz "cardapio_ad"
 	cmd_2: .asciiz "cardapio_rm"
 	cmd_3: .asciiz "cardapio_list"
 	cmd_4: .asciiz "cardapio_format"
@@ -24,6 +24,8 @@
 	cmd_invalido: .asciiz "Comando Inválido"
 	
 	codigo_invalido: .asciiz "Falha: código de item inválido"
+	
+	erro_mais_que_12_string: .asciiz "O item deve ter no máximo 12 caracteres"
 	
 	buffer: .space 50
 	
@@ -148,6 +150,13 @@
 		break_line
 		j main
 		
+		erro_mais_que_12:
+		la $a0, erro_mais_que_12_string #caso comando não se encaixe em nenhum dos códigos acima, imrpime "Comando inválido"
+		li $v0, 4
+		syscall
+		break_line
+		j main
+		
 		
 		cmd_exit_true:
 		fim_de_codigo
@@ -156,7 +165,7 @@
 		
 			la $s1, itens_memoria #adiciona espaço reservado para itens em $t1
 		
-			addi $s0, $s0, 4 #vai para o <option 1> na string no usuário
+			addi $s0, $s0, 12 #vai para o <option 1> na string no usuário
 			lb $t0, 0($s0) #carrega o primeiro byte da string(código do item)
 			subi $t0, $t0, 48 #subtrai 48 do primeiro byte (transforma em decimal)
 			lb $t4, 1($s0) #carrega o segundo byte da string(código do item)
@@ -181,6 +190,43 @@
 			
 			addi $s0, $s0, 1 #vai para o <option 2> na string do usuário
 			
+			add $t0, $0, $0 #acumulador $t0
+			
+			loop_valida_preco:
+				
+				addi $t1, $0, 48 #determina $t1 como 48 ("0" em ascii")
+				lb $t2, 0($s0) #carrega próximo byte de $s0
+				slt $t3, $t2, $t1 #$t3 será 1 se $t2 for menor que 48 (não desejável)
+				bne $t3, $0, comando_invalido #se $t3 for 1, comando é inválido
+				addi $t1, $0, 58 #determina $t1 como 58 ("9 + 1" em ascii")
+				slt $t3, $t2, $t1 #$t3 será 1 se $t2 for menor que 58 (desejável)
+				beq $t3, $0, comando_invalido #se $t3 for 0, comando é inválido
+			
+				addi $t0, $t0, 1 #adiciona 1 no acumulador
+				addi $s0, $s0, 1 #avança a string do usuário 
+				bne $t0, 5, loop_valida_preco #se acumulador não for 5, volta para o loop
+			
+			lb $t0, 0($s0) #carrega o próximo byte em $t0 (deve ser "-")
+			
+			bne $t0, 45, comando_invalido #se próximo byte não for "-", comando é invalido
+			
+			addi $s0, $s0, 1 #avança 1 byte na string do usuário
+
+			add $t0, $0, $0 #acumulador $t0
+			
+			lb $t1, 0($s0) #carrega o primeiro caractere da string do usuário
+			beq $t1, 10, comando_invalido #se comando for vazio, comando é inváido
+			
+			loop_valida_descricao: #loop para validar se nome será menor que 12 caracteres(para melhor armazenamento na memória
+				lb $t1, 0($s0) #carrega próximo byte da string
+				beq $t1, 10, retorna_loop_valida_descricao #verifica se string terminou
+				addi $s0, $s0, 1 #percorre um caractere na string
+				addi $t0, $t0, 1 #adiciona 1 ao acumulador
+				bne $t0, 13, loop_valida_descricao #se acumulador != 13, loop continua
+				j erro_mais_que_12 #jump para erro de descrição maior que 12
+			retorna_loop_valida_descricao: 
+			
+			passou_teste
 
 			j main
 			
@@ -308,30 +354,11 @@ end_strcmp:
 	jr $ra             # Retorna
 	
 	
-read_preco:
 
-	lb $t0, 0($a0)
-	subi $t0, $t0, 48
-	
-	lb $t1, 4($a0)
-	subi $t1, $t1, 48
-	mul $t1, $t1, 10
-	
-	lb $t2, 8($a0)
-	subi $t2, $t2, 48
-	mul $t2, $t2, 100
-	
-	lb $t3, 12($a0)
-	subi $t3, $t3, 48
-	mul $t3, $t3, 1000
-	
-	lb $t4, 16($a0)
-	subi $t4, $t4, 48
-	mul $t4, $t4, 10000
-	
-	add $t0, $t0, $t1
-	add $t1, $t2, $t3
-	add $t1, $t1, $t4
-	add $v0, $t0, $t1
 
-jr $ra
+
+
+
+
+
+
