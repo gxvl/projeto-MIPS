@@ -1,3 +1,9 @@
+# Arquitetura e Organizacao de Computadores: 1VA
+# Grupo: Anthony Guerra, Geraldo Goncalves, Paulo Veloso e Rodrigo Souza
+# Questao 2: Implemente um código que fica constantemente tentando ler um caractere do KEYBOARD MMIO
+# e sempre que receber um, imprime o mesmo caracter imediatamente no DISPLAY MMIO.
+
+
 .data
 # receiver_data: 0xffff0004
 # receiver_control: 0xffff0000
