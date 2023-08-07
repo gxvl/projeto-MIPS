@@ -6,7 +6,7 @@
 
 	itens_memoria: .space 400
 	mesas_memoria: .space 4635
-	cmd_1: .asciiz "cardapio_ad"
+	cmd_1: .asciiz "tst"
 	cmd_2: .asciiz "cardapio_rm"
 	cmd_3: .asciiz "cardapio_list"
 	cmd_4: .asciiz "cardapio_format"
@@ -23,17 +23,27 @@
 	cmd_exit: .asciiz "exit"
 	cmd_invalido: .asciiz "Comando Inválido"
 	
+	codigo_invalido: .asciiz "Falha: código de item inválido"
+	
 	buffer: .space 50
 	
 	banner: .asciiz "pingas-shell>> "
 	
 	break_line_string: .asciiz "\n"
+	passou_teste_string: .asciiz "Passou!"
 	
 
 .macro break_line # macro para imprimir uma quebra de linha
 	la $a0, break_line_string
 	addi $v0, $0, 4
 	syscall
+.end_macro 
+
+.macro passou_teste # macro para imprimir uma quebra de linha
+	la $a0, passou_teste_string
+	addi $v0, $0, 4
+	syscall
+	break_line
 .end_macro 
 
 .macro fim_de_codigo # macro para finalizar a execução do código
@@ -131,18 +141,52 @@
 		jal strcmp #compara string do usuário com do comando salvo
 		beq $v0, $0, cmd_exit_true #se comandos forem iguais, pular para operação determinada
 		
-		la $a0, cmd_invalido #caso comando não se encaixe em nenhum dos códigos acima, imrpime "Código Inválido"
+		comando_invalido:
+		la $a0, cmd_invalido #caso comando não se encaixe em nenhum dos códigos acima, imrpime "Comando inválido"
 		li $v0, 4
 		syscall
 		break_line
 		j main
 		
+		
 		cmd_exit_true:
 		fim_de_codigo
 		
 		cmd_1_true: #Comando "cardapio_ad"
-			li $a0, 1
-			li $v0, 1
+		
+			la $s1, itens_memoria #adiciona espaço reservado para itens em $t1
+		
+			addi $s0, $s0, 4 #vai para o <option 1> na string no usuário
+			lb $t0, 0($s0) #carrega o primeiro byte da string(código do item)
+			subi $t0, $t0, 48 #subtrai 48 do primeiro byte (transforma em decimal)
+			lb $t4, 1($s0) #carrega o segundo byte da string(código do item)
+			subi $t4, $t4, 48 #subtrai 48 do segundo byte (transforma em decimal)
+			
+			mul $t0, $t0, 10 #multiplica byte mais significativo por 10(ele será a dezena)
+			
+			add $t0, $t0, $t4 #adiciona primeiro com segundo byte
+
+			addi $t1, $0, 1 #$t1 = 1
+			slt $t2, $t0, $t1 #$t2 será 1 se $t0 < $t1
+			bne $t2, $0, erro_codigo_invalido #se $t2 != 0, erro de código inválido
+			addi $t1, $0, 21 #$t1 = 21
+			slt $t2, $t0, $t1 #$t2 será 1 se $t0 < $t1
+			beq $t2, $0, erro_codigo_invalido #se $t2 != 0, erro de código inválido
+			
+			addi $s0, $s0, 2 #vai para o "-" antes do <option 2> na string no usuário
+			
+			lb $t0, 0($s0) #carrega o próximo byte em $t0
+			
+			bne $t0, 45, comando_invalido #se próximo byte não for "-", comando é invalido
+			
+			addi $s0, $s0, 1 #vai para o <option 2> na string do usuário
+			
+
+			j main
+			
+		erro_codigo_invalido:
+			la $a0, codigo_invalido
+			li $v0, 4
 			syscall
 			break_line
 			j main
@@ -262,3 +306,32 @@ end_strcmp:
 	true:
 	li $v0, 0         # Define o resultado como 0 (strings são iguais)
 	jr $ra             # Retorna
+	
+	
+read_preco:
+
+	lb $t0, 0($a0)
+	subi $t0, $t0, 48
+	
+	lb $t1, 4($a0)
+	subi $t1, $t1, 48
+	mul $t1, $t1, 10
+	
+	lb $t2, 8($a0)
+	subi $t2, $t2, 48
+	mul $t2, $t2, 100
+	
+	lb $t3, 12($a0)
+	subi $t3, $t3, 48
+	mul $t3, $t3, 1000
+	
+	lb $t4, 16($a0)
+	subi $t4, $t4, 48
+	mul $t4, $t4, 10000
+	
+	add $t0, $t0, $t1
+	add $t1, $t2, $t3
+	add $t1, $t1, $t4
+	add $v0, $t0, $t1
+
+jr $ra
