@@ -1,6 +1,7 @@
 # Arquitetura e Organizacao de Computadores: 1VA
 # Grupo: Anthony Guerra, Geraldo Goncalves, Paulo Veloso e Rodrigo Souza
 # Projeto: Implementar um sistema de gerenciamento para um restaurante, operado atraves de um terminal que interpreta comandos de texto.
+# Foram Implementados apenas os comandos cmd_1 ; cmd_2 ; cmd_3 ; cmd_4
 
 .data 
 
@@ -732,11 +733,5 @@ limpar_buffer:
 		bne $t0, 50, loop_buffer #se o acumulador for menor que 50, loop continua
 		 
 	jr $ra
-
-
-
-
-
-
 
 
