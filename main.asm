@@ -42,11 +42,20 @@
 	
 	banner: .asciiz "pingas-shell>> "
 	
+	cardapio_header: .asciiz "\nCARDAPIO\n"
+	codigo_column: .asciiz "CODIGO"
+	preco_column: .asciiz "PRECO"
+	descricao_column: .asciiz "DESCRICAO"
+	separador_vertical: .asciiz "|"
+	separador_horizontal: .asciiz "------------------------------"
+	space: .asciiz " "
+	
 	break_line_string: .asciiz "\n"
 	dash_string: .asciiz "-"
 	passou_teste_string: .asciiz "Passou!"
 	
 	msg_lista_vazia_string: .asciiz "\nLista vazia!\n"
+	filename: .asciiz "./cardapio.txt"
 	
 .macro break_line # macro para imprimir uma quebra de linha
 	la $a0, break_line_string
@@ -54,13 +63,55 @@
 	syscall
 .end_macro 
 
-.macro print_dash # macro para imprimir uma quebra de linha
+.macro print_dash # macro para imprimir um hifen
 	la $a0, dash_string
 	addi $v0, $0, 4
 	syscall
 .end_macro 
 
-.macro passou_teste # macro para imprimir uma quebra de linha
+.macro print_cardapio_header # macro para imprimir cardapio header
+	la $a0, cardapio_header
+	addi $v0, $0, 4
+	syscall
+.end_macro
+
+.macro print_separador_vertical # macro para imprimir separador vertical
+	la $a0, separador_vertical
+	addi $v0, $0, 4
+	syscall
+.end_macro
+
+.macro print_separador_horizontal # macro para imprimir separador horizontal
+	la $a0, separador_horizontal
+	addi $v0, $0, 4
+	syscall
+.end_macro
+
+.macro print_codigo_column # macro para imprimir codigo column
+	la $a0, codigo_column
+	addi $v0, $0, 4
+	syscall
+.end_macro
+
+.macro print_preco_column # macro para imprimir preco column
+	la $a0, preco_column
+	addi $v0, $0, 4
+	syscall
+.end_macro
+
+.macro print_descricao_column # macro para imprimir descricao column
+	la $a0, descricao_column
+	addi $v0, $0, 4
+	syscall
+.end_macro
+
+.macro print_space # macro para imprimir descricao column
+	la $a0, space
+	addi $v0, $0, 4
+	syscall
+.end_macro
+
+.macro passou_teste # macro para imprimir string de teste
 	la $a0, passou_teste_string
 	addi $v0, $0, 4
 	syscall
@@ -78,6 +129,27 @@
 	addi $v0, $0, 10
 	syscall
 .end_macro
+
+.macro imprimir_layout_cardapio
+	print_separador_horizontal
+	break_line
+	print_separador_vertical
+	print_space
+	print_codigo_column
+	print_space
+	print_separador_vertical
+	print_space
+	print_preco_column
+	print_space
+	print_separador_vertical
+	print_space
+	print_descricao_column
+	print_space
+	print_separador_vertical
+	break_line
+	print_separador_horizontal
+	break_line
+.end_macro 
 
 .text
 
@@ -422,15 +494,31 @@
 			
 			remocao_sucesso
 			
+			# remove 1 do contador de itens registrados
+			la $s0, contador_itens_cardapio 
+			lb $t0, 0($s0)
+			subi $t0, $t0, 1
+			sb $t0, 0($s0)
+			
 			j main
 			
+		cod_nao_cadastrado:
+			la $a0, cod_nao_cadastrado_string # erro caso o comando nao esteja cadastrado
+			li, $v0, 4
+			syscall
+			break_line
+		j main
+
+			
 		cmd_3_true: #comando "cardapio_list
+			print_cardapio_header
 			la $s0, itens_memoria # carrega endereco base dos itens da memoria em $s0
 			move $t4, $s0 # carrega o endereco base no registrador temporario $t4
 			lbu $t0, contador_itens_cardapio # carrega contador_itens_cardapio em $t0
 			lbu $t1, maximo_itens_cardapio # carrega maximo_itens_cardapio em $t1
 			beq $t0, $0, msg_lista_vazia # se o contador for 0, imprime lista vazia
 			add $t2, $0, $0 # inicia contador para monitorar quantidade de itens impressos até o momento
+			imprimir_layout_cardapio
 	
 			loop_cardapio_list: # loop para imprimir todos os itens do cardapio
 				addi $t2, $t2, 1 # incrementa o contador
@@ -439,8 +527,13 @@
 				lbu $t3, tamanho_codigo_item # salva o tamanho do codigo do item em $t3
 				add $t5, $0, $0 # inicia contador de bytes
 				
+				print_space
+				print_space
+				print_space
+				print_space
 				loop_imprime_codigo:
 					lbu $t6, 0($t4) # carrega o valor no endereco base de itens em $t6
+					beq $t6, $0, next_item # se o item atual nao existir, pega o proximo
 					sub $t6, $t6, 48 # transforma em decimal
 		 			move $a0, $t6 # transfere $t6 para $a0 para syscall
 		 			li $v0, 1 # seta 1 em $v0 para imprimir int
@@ -448,10 +541,14 @@
 		 			addi $t5, $t5, 1 # incrementa contador de bytes
 		 			addi $t4, $t4, 1 # incrementa posicao do endereco
 		 			blt $t5, $t3, loop_imprime_codigo # reinicia o loop se nao tiver passado pelos 2 bytes de codigo
-		 			print_dash # imprime hifen
 		 		
 		 		lbu $t7, tamanho_preco_item # carrega tamanho_preco_item $t7
 		 		add $t3, $t3, $t7 # soma o limite de codigo com o limite de preco para saber onde parar
+		 		print_space
+		 		print_space
+		 		print_space
+		 		print_separador_vertical
+		 		print_space
 		 		loop_imprime_preco:
 		 			lbu $t6, 0($t4) # carrega o valor do endereco base incrementado das posicoes de codigo em $t6
 					sub $t6, $t6, 48 # transforma em decimal
@@ -461,8 +558,11 @@
 		 			addi $t5, $t5, 1 # incrementa contador de bytes
 		 			addi $t4, $t4, 1 # incrementa posicao do endereco
 		 			blt $t5, $t3, loop_imprime_preco # reinicia o loop se nao tiver passado pelos 5 bytes de codigo
-		 			print_dash # imprime hifen
 		 		
+		 		print_space
+		 		print_separador_vertical
+		 		print_space
+		 		print_space
 		 		lbu $t7, tamanho_descricao_item # carrega tamanho_descricao_item em $t7
 		 		add $t3, $t3, $t7 # soma o limite de codigo com o limite de descricao para saber onde parar
 		 		loop_imprime_descricao:
@@ -476,8 +576,14 @@
 		 			addi $t4, $t4, 1 # incrementa posicao do endereco
 		 			blt $t5, $t3, loop_imprime_descricao # reinicia o loop se tiver acabado a descricao
 		 		
-		 		break_line # quebra
-				j loop_cardapio_list 
+		 		break_line # quebra linha
+		 		print_separador_horizontal
+		 		break_line
+				j loop_cardapio_list
+			
+			next_item:
+				addi $t4, $t4, 20 # soma 20 para ir para o endereco do proximo item
+				j loop_imprime_codigo # volta para a iteracao
 	 	
 			finalizar:
 				j main
@@ -563,12 +669,12 @@
 			break_line
 			j main
 			
-		cmd_12_true: #Comando "salvar"
+		cmd_12_true: # Comando "salvar-"
 			li $a0, 12
 			li $v0, 1
-			syscall
-			break_line
-			j main
+            syscall
+            break_line
+            j main
 			
 		cmd_13_true: #comando "recarregar"
 			li $a0, 13
