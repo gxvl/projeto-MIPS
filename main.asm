@@ -413,12 +413,70 @@
 			
 			j main
 			
-		cmd_3_true: #Comando "cardapio_list"
-			li $a0, 3
-			li $v0, 1
-			syscall
-			break_line
-			j main
+		cmd_3_true: #comando "cardapio_list
+			la $s0, itens_memoria # carrega endereco base dos itens da memoria em $s0
+			move $t4, $s0 # carrega o endereco base no registrador temporario $t4
+			lbu $t0, contador_itens_cardapio # carrega contador_itens_cardapio em $t0
+			lbu $t1, maximo_itens_cardapio # carrega maximo_itens_cardapio em $t1
+			beq $t0, $0, msg_lista_vazia # se o contador for 0, imprime lista vazia
+			add $t2, $0, $0 # inicia contador para monitorar quantidade de itens impressos até o momento
+	
+			loop_cardapio_list: # loop para imprimir todos os itens do cardapio
+				addi $t2, $t2, 1 # incrementa o contador
+				blt $t1, $t2, finalizar # finaliza se extrapolar o maximo
+				blt $t0, $t2, finalizar # finaliza se ja tiver imprimido todos os itens registrados
+				lbu $t3, tamanho_codigo_item # salva o tamanho do codigo do item em $t3
+				add $t5, $0, $0 # inicia contador de bytes
+				
+				loop_imprime_codigo:
+					lbu $t6, 0($t4) # carrega o valor no endereco base de itens em $t6
+					sub $t6, $t6, 48 # transforma em decimal
+		 			move $a0, $t6 # transfere $t6 para $a0 para syscall
+		 			li $v0, 1 # seta 1 em $v0 para imprimir int
+		 			syscall
+		 			addi $t5, $t5, 1 # incrementa contador de bytes
+		 			addi $t4, $t4, 1 # incrementa posicao do endereco
+		 			blt $t5, $t3, loop_imprime_codigo # reinicia o loop se nao tiver passado pelos 2 bytes de codigo
+		 			print_dash # imprime hifen
+		 		
+		 		lbu $t7, tamanho_preco_item # carrega tamanho_preco_item $t7
+		 		add $t3, $t3, $t7 # soma o limite de codigo com o limite de preco para saber onde parar
+		 		loop_imprime_preco:
+		 			lbu $t6, 0($t4) # carrega o valor do endereco base incrementado das posicoes de codigo em $t6
+					sub $t6, $t6, 48 # transforma em decimal
+		 			move $a0, $t6 # transfere $t6 para $a0 para syscall
+		 			li $v0, 1 # seta 1 em $v0 para imprimir int
+		 			syscall
+		 			addi $t5, $t5, 1 # incrementa contador de bytes
+		 			addi $t4, $t4, 1 # incrementa posicao do endereco
+		 			blt $t5, $t3, loop_imprime_preco # reinicia o loop se nao tiver passado pelos 5 bytes de codigo
+		 			print_dash # imprime hifen
+		 		
+		 		lbu $t7, tamanho_descricao_item # carrega tamanho_descricao_item em $t7
+		 		add $t3, $t3, $t7 # soma o limite de codigo com o limite de descricao para saber onde parar
+		 		loop_imprime_descricao:
+		 			lbu $t6, 0($t4) # carrega o valor do endereco base incrementado da qtde de bytes de codigo e valor
+		 			beq $t6, 10, next # pula para o proximo byte se for line_feed
+		 			move $a0, $t6 # transfere $t6 para $a0 para chamada do syscall
+		 			li $v0, 11 # seta 11 em $v0 para imprimir caractere
+		 			syscall
+		 			next:
+		 			addi $t5, $t5, 1 # incrementa contador de bytes
+		 			addi $t4, $t4, 1 # incrementa posicao do endereco
+		 			blt $t5, $t3, loop_imprime_descricao # reinicia o loop se tiver acabado a descricao
+		 		
+		 		break_line # imprime quebra de linha
+				j loop_cardapio_list # reinicia para o proximo item
+	 	
+			finalizar:
+				j main
+				
+			msg_lista_vazia:
+				la $a0, msg_lista_vazia_string
+				li $v0, 4
+				syscall
+				break_line
+				j main
 			
 		cmd_4_true: #Comando "cardapio_format"
 			
