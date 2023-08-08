@@ -6,6 +6,12 @@
 
 	itens_memoria: .space 400
 	mesas_memoria: .space 4635
+	tamanho_codigo_item: .byte 2
+	tamanho_preco_item: .byte 5
+	tamanho_descricao_item: .byte 13
+	tamanho_item: .byte 20
+	maximo_itens_cardapio: .byte 20
+	contador_itens_cardapio: .byte 0
 	cmd_1: .asciiz "cardapio_ad"
 	cmd_2: .asciiz "cardapio_rm"
 	cmd_3: .asciiz "cardapio_list"
@@ -40,19 +46,19 @@
 	dash_string: .asciiz "-"
 	passou_teste_string: .asciiz "Passou!"
 	
-
+	msg_lista_vazia_string: .asciiz "\nLista vazia!\n"
+	
 .macro break_line # macro para imprimir uma quebra de linha
 	la $a0, break_line_string
 	addi $v0, $0, 4
 	syscall
 .end_macro 
 
-.macro print_dash # macro para imprimir um hifen
+.macro print_dash # macro para imprimir uma quebra de linha
 	la $a0, dash_string
 	addi $v0, $0, 4
 	syscall
 .end_macro 
-	
 
 .macro passou_teste # macro para imprimir uma quebra de linha
 	la $a0, passou_teste_string
@@ -61,18 +67,17 @@
 	break_line
 .end_macro 
 
-.macro remocao_sucesso #apos a remocao, imprime a string de sucesso
-		la $a0, remocao_sucesso_string
-		li $v0, 4
-		syscall
-		break_line
-.end_macro
-
 .macro fim_de_codigo # macro para finalizar a execução do código
 	addi $v0, $0, 10
 	syscall
 .end_macro
-	
+
+.macro print_int(%int)
+	addi $v0, $0, 1
+	add $a0, $0, %int
+	syscall
+.end_macro
+
 .text
 
 	main:
@@ -173,13 +178,6 @@
 		erro_mais_que_12:
 		la $a0, erro_mais_que_12_string #caso comando não se encaixe em nenhum dos códigos acima, imrpime "Comando inválido"
 		li $v0, 4
-		syscall
-		break_line
-		j main
-		
-		cod_nao_cadastrado:
-		la $a0, cod_nao_cadastrado_string # erro caso o comando nao esteja cadastrado
-		li, $v0, 4
 		syscall
 		break_line
 		j main
@@ -354,6 +352,10 @@
 			j main
 			
 		item_adicionado:
+			la $s0, contador_itens_cardapio
+			lb $t0, 0($s0)
+			addi $t0, $t0, 1
+			sb $t0, 0($s0)
 			la $a0, item_adicionado_string
 			li $v0, 4
 			syscall
@@ -367,58 +369,10 @@
 			
 			
 		cmd_2_true: #Comando "cardapio_rm"
-		
-			la $s1, itens_memoria #adiciona espaço reservado para itens em $s1
-			#ler <option 1>
-			addi $s0, $s0, 12 #vai para o <option 1> na string no usuário
-			move $t5, $s0 #salva $s0 atual (sem o "cardapio_rm-") em $t5
-			lb $t0, 0($s0) #carrega o código do item
-			subi $t0, $t0, 48 #subtrai 48 do primeiro byte (transforma em decimal)
-			lb $t4, 1($s0) #carrega o segundo byte da string(código do item)
-			subi $t4, $t4, 48 #subtrai 48 do segundo byte (transforma em decimal)
-			
-			mul $t0, $t0, 10 #multiplica byte mais significativo por 10(ele será a dezena)
-			
-			add $t0, $t0, $t4 #adiciona primeiro com segundo byte
-			
-			#Teste de numero valido
-			addi $t1, $0, 1 #$t1 = 1
-			slt $t2, $t0, $t1 #$t2 será 1 se $t0 < $t1
-			bne $t2, $0, erro_codigo_invalido #se $t2 != 0, erro de código inválido
-			addi $t1, $0, 21 #$t1 = 21
-			slt $t2, $t0, $t1 #$t2 será 1 se $t0 < $t1
-			beq $t2, $0, erro_codigo_invalido #se $t2 != 0, erro de código inválido
-			
-			move $s0, $t5 #retorna $s0 para antes do comando
-			add $t0, $0, $0 #acumulador $t0
-			lb $t1, 0($s0) #carrega primeiro byte da string do usuário	
-			lb $t2, 1($s0) #carrega segundo byte da string do usuário
-			move $t3, $s1 #carrega todos os itens da memória em $t3
-			
-			loop_cod_remocao:
-				lb $t4, 0($t3) #carrega primeiro byte do código do número da memória
-				lb $t5, 1($t3) #carrega segundo byte do código do número da memória
-				bne $t4, $t1, fim_loop_cod_remocao  #checa se primeiro byte do código do usuário e da memória são iguais
-				bne $t5, $t2, fim_loop_cod_remocao #checa se segundo byte do código do usuário e da memória são iguais
-				j remocao_externo
-				fim_loop_cod_remocao:
-				addi $t0, $t0, 1 #adiciona 1 no acumulador
-				addi $t3, $t3, 20 #passa para próximo item na memória
-				bne $t0, 20, loop_cod_remocao
-				j cod_nao_cadastrado
-				
-				remocao_externo:
-				add $t4, $0, $0 #determina acumulador como $t4
-				add $t5, $0, $0 #determina $t5 como 0
-			remocao:
-				sb $t5, 0($t3) #salva $t5 na memória
-				addi $t3, $t3, 1#adiciona 1 em $t3
-				addi $t4, $t4, 1 #adiciona 1 em $t4
-				bne $t4, 20, remocao
-					
-			
-			remocao_sucesso
-			
+			li $a0, 2
+			li $v0, 1
+			syscall
+			break_line
 			j main
 			
 		cmd_3_true: #comando "cardapio_list
@@ -473,8 +427,8 @@
 		 			addi $t4, $t4, 1 # incrementa posicao do endereco
 		 			blt $t5, $t3, loop_imprime_descricao # reinicia o loop se tiver acabado a descricao
 		 		
-		 		break_line # imprime quebra de linha
-				j loop_cardapio_list # reinicia para o proximo item
+		 		break_line # quebra
+				j loop_cardapio_list 
 	 	
 			finalizar:
 				j main
@@ -487,29 +441,11 @@
 				j main
 			
 		cmd_4_true: #Comando "cardapio_format"
-			
-			la $s1, itens_memoria #carrega o endereço de memória dos itens
-			
-			move $t7, $s1 #copia $s1 em $t7
-			
-			addi $t0, $0, 0 #determina acumulador como $t0
-			
-			addi $t1, $0, 0 #determina $t1 como 0
-			
-			loop_format:
-			sb $t1, 0($t7) #Limpa próximo byte 
-			addi $t7, $t7, 1 #Move um byte na memória
-			addi $t0, $t0, 1 #adiciona um ao acumulador
-			bne $t0, 400, loop_format #loop será realizado 400 vezes (tamanho da memória)
-			
-			la $a0, cardapio_apagado_string #caso comando não se encaixe em nenhum dos códigos acima, imrpime "Comando inválido"
-			li $v0, 4
+			li $a0, 4
+			li $v0, 1
 			syscall
 			break_line
-			
 			j main
-			
-			#FIM DO CMD_4
 			
 		cmd_5_true: #Comando "mesa_iniciar"
 			li $a0, 5
@@ -607,3 +543,11 @@ end_strcmp:
 	jr $ra             # Retorna
 	
 	
+
+
+
+
+
+
+
+
