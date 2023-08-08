@@ -28,6 +28,7 @@
 	item_adicionado_string: .asciiz "Item adicionado com sucesso"
 	remocao_sucesso_string: .asciiz "Item removido com sucesso"
 	cod_nao_cadastrado_string: .asciiz "Código informado não possui item cadastrado no cardápio"
+	cardapio_apagado_string: .asciiz "Cardápio reiniciado com sucesso"
 	
 	erro_mais_que_12_string: .asciiz "O item deve ter no máximo 12 caracteres"
 	
@@ -399,12 +400,12 @@
 				j cod_nao_cadastrado
 				
 				remocao_externo:
-				add $t4, $0, $0
-				add $t5, $0, $0
+				add $t4, $0, $0 #determina acumulador como $t4
+				add $t5, $0, $0 #determina $t5 como 0
 			remocao:
-				sb $t5, 0($t3)
-				addi $t3, $t3, 1
-				addi $t4, $t4, 1
+				sb $t5, 0($t3) #salva $t5 na memória
+				addi $t3, $t3, 1#adiciona 1 em $t3
+				addi $t4, $t4, 1 #adiciona 1 em $t4
 				bne $t4, 20, remocao
 					
 			
@@ -420,11 +421,29 @@
 			j main
 			
 		cmd_4_true: #Comando "cardapio_format"
-			li $a0, 4
-			li $v0, 1
+			
+			la $s1, itens_memoria #carrega o endereço de memória dos itens
+			
+			move $t7, $s1 #copia $s1 em $t7
+			
+			addi $t0, $0, 0 #determina acumulador como $t0
+			
+			addi $t1, $0, 0 #determina $t1 como 0
+			
+			loop_format:
+			sb $t1, 0($t7) #Limpa próximo byte 
+			addi $t7, $t7, 1 #Move um byte na memória
+			addi $t0, $t0, 1 #adiciona um ao acumulador
+			bne $t0, 400, loop_format #loop será realizado 400 vezes (tamanho da memória)
+			
+			la $a0, cardapio_apagado_string #caso comando não se encaixe em nenhum dos códigos acima, imrpime "Comando inválido"
+			li $v0, 4
 			syscall
 			break_line
+			
 			j main
+			
+			#FIM DO CMD_4
 			
 		cmd_5_true: #Comando "mesa_iniciar"
 			li $a0, 5
