@@ -2,6 +2,8 @@
 # Grupo: Anthony Guerra, Geraldo Goncalves, Paulo Veloso e Rodrigo Souza
 # Projeto: Implementar um sistema de gerenciamento para um restaurante, operado atraves de um terminal que interpreta comandos de texto.
 # Foram Implementados apenas os comandos cmd_1 ; cmd_2 ; cmd_3 ; cmd_4
+# Comandos sem parâmetros devem ser finalizados com hífen ('-'), comandos com parâmetros são instanciados normalmente
+# Ex: "cardapio_ad-<option1>-<option2>-<option3>" (não finaliza com hífen); "cardapio_format-"   (finaliza com hífen)
 
 .data 
 
@@ -620,6 +622,11 @@
 			syscall
 			break_line
 			
+			la $s0, contador_itens_cardapio #carrega o contador global de itens
+			lb $t0, 0($s0) #salva o primeiro byte em $t0
+			addi $t0, $0, 0 #determina $t0 como 0
+			sb $t0, 0($s0) #salva contador como 0
+			
 			j main
 			
 			#FIM DO CMD_4
@@ -733,5 +740,6 @@ limpar_buffer:
 		bne $t0, 50, loop_buffer #se o acumulador for menor que 50, loop continua
 		 
 	jr $ra
+
 
 
