@@ -65,16 +65,17 @@
 	addi $v0, $0, 4
 	syscall
 	break_line
-.end_macro 
+.end_macro
+
+.macro remocao_sucesso #apos a remocao, imprime a string de sucesso
+		la $a0, remocao_sucesso_string
+		li $v0, 4
+		syscall
+		break_line
+.end_macro
 
 .macro fim_de_codigo # macro para finalizar a execução do código
 	addi $v0, $0, 10
-	syscall
-.end_macro
-
-.macro print_int(%int)
-	addi $v0, $0, 1
-	add $a0, $0, %int
 	syscall
 .end_macro
 
