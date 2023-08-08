@@ -24,6 +24,8 @@
 	cmd_invalido: .asciiz "Comando Inválido"
 	
 	codigo_invalido: .asciiz "Falha: código de item inválido"
+	item_ja_cadastrado: .asciiz  "Falha: nome de item já cadastrado"
+	item_adicionado_string: .asciiz "Item adicionado com sucesso"
 	
 	erro_mais_que_12_string: .asciiz "O item deve ter no máximo 12 caracteres"
 	
@@ -163,9 +165,10 @@
 		
 		cmd_1_true: #Comando "cardapio_ad"
 		
-			la $s1, itens_memoria #adiciona espaço reservado para itens em $t1
+			la $s1, itens_memoria #adiciona espaço reservado para itens em $s1
 		
 			addi $s0, $s0, 12 #vai para o <option 1> na string no usuário
+			move $t5, $s0 #salva $s0 atual (sem o "cardapio_ad-") em $s2
 			lb $t0, 0($s0) #carrega o primeiro byte da string(código do item)
 			subi $t0, $t0, 48 #subtrai 48 do primeiro byte (transforma em decimal)
 			lb $t4, 1($s0) #carrega o segundo byte da string(código do item)
@@ -220,15 +223,96 @@
 			loop_valida_descricao: #loop para validar se nome será menor que 12 caracteres(para melhor armazenamento na memória
 				lb $t1, 0($s0) #carrega próximo byte da string
 				beq $t1, 10, retorna_loop_valida_descricao #verifica se string terminou
+				beq $t1, 45, comando_invalido
 				addi $s0, $s0, 1 #percorre um caractere na string
 				addi $t0, $t0, 1 #adiciona 1 ao acumulador
 				bne $t0, 13, loop_valida_descricao #se acumulador != 13, loop continua
 				j erro_mais_que_12 #jump para erro de descrição maior que 12
 			retorna_loop_valida_descricao: 
 			
-			passou_teste
+			move $s0, $t5 #retorna $s0 para antes do comando do item
+			
+			add $t0, $0, $0 #acumulador $t0,
+			
+			lb $t1, 0($s0) #carrega primeiro byte da string do usuário	
+			lb $t2, 1($s0) #carrega segundo byte da string do usuário	
+			
+			move $t3, $s1 #carrega todos os itens da memória em $t3
+			
+			loop_checar_codigo_repetido:
+				lb $t4, 0($t3) #carrega primeiro byte do código do número da memória
+				lb $t5, 1($t3) #carrega segundo byte do código do número da memória
+				bne $t4, $t1, fim_loop_checar_codigo_repetido #checa se primeiro byte do código do usuário e da memória são iguais
+				bne $t5, $t2, fim_loop_checar_codigo_repetido #checa se segundo byte do código do usuário e da memória são iguais
+				j erro_codigo_invalido
+				fim_loop_checar_codigo_repetido:
+				addi $t0, $t0, 1 #adiciona 1 no acumulador
+				addi $t3, $t3, 20 #passa para próximo item na memória
+				bne $t0, 20, loop_checar_codigo_repetido
+			
+			move $t7, $s0 #armazena $s0 em $t5 para operar string sem perdê-la
+			addi $t7, $t7, 9 #move string para seu nome
+			
+			move $t6, $s1 #carrega todos os itens da memória em $t3
+			addi $t6, $t6, 7 #move para o nome das strings da memória
+			
+			add $t0, $0, $0 #acumulador $t0,
+			
+			addi $t4, $0, 0 #acumulador $t4
 
-			j main
+			
+			loop_checar_nome_repetido:
+				lb $t1, 0($t6) #carrega primeiro caractere da string da memória
+				lb $t2, 0($t7) #carrega primeiro caractere da string do usuário
+				beq $t1, $t2, checar_proximo_char #se caracteres forem iguais, programa checará o proximo caractere
+				addi $t4, $t4, 1 #acumulador $t4 + 1
+				beq $t4, 20, nome_nao_repetido #se acumulador $t4 for 20, o nome é original
+				sub $t6, $t6, $t0 #$t6 subtraído de $t0 (volta ao começo da string)
+				sub $t7, $t7, $t0 #$t7 subtraído de $t0 (volta ao começo da string)
+				sub $t0, $t0, $t0 #$t0 reiniciado
+				addi $t6, $t6, 20 #$t6 irá para a próxima string
+				j loop_checar_nome_repetido #repete loop
+				checar_proximo_char:
+				addi $t0, $t0, 1 #adiciona 1 no acumulador
+				addi $t6, $t6, 1 #avança um caractere
+				addi $t7, $t7, 1 #avança um caractere
+				bne $t0, 13, loop_checar_nome_repetido #se $t0 for igual a 13, significa que o nome ja existe
+			
+				j erro_item_ja_cadastrado 
+			
+			nome_nao_repetido:
+				
+				move $t7, $s0 #armazena $s0 em $t7 (string do usuário)
+				move $t6, $s1 #armazena $s1 em $t6 (string da memória)
+				
+				lb $t0, 0($t7) #carrega o primeiro byte da string(código do item)
+				subi $t0, $t0, 48 #subtrai 48 do primeiro byte (transforma em decimal)
+				lb $t4, 1($t7) #carrega o segundo byte da string(código do item)
+				subi $t4, $t4, 48 #subtrai 48 do segundo byte (transforma em decimal)
+			
+				mul $t0, $t0, 10 #multiplica byte mais significativo por 10(ele será a dezena)
+			
+				add $t0, $t0, $t4 #adiciona primeiro com segundo byte ($t0 será o código)
+				
+				mul $t0, $t0, 20 #multiplica código por 4 para determinar a base do endereçamento
+				subi $t0, $t0, 20 #ajuste de base (pois é de 1 a 20, e não de 0 a 20)
+				
+				add $t6, $t6, $t0 #adiciona $t0 na em $t6 (associado a memória)
+				
+				addi $t4, $0, 1 #acumulador $t4
+				
+				loop_store_item:
+					lb $t2, 0($t7) #carrega próximo byte do usuário
+					beq $t2, 45, cancela_hifen_cmd1 #se for hífen, ignora
+					sb $t2, 0($t6) #salva $t2 na memória
+					addi $t7, $t7, 1 #adiciona 1 em $t7
+					addi $t6, $t6, 1  #adiciona 1 em $t6
+					addi $t4, $t4, 1  #adiciona no acumulador
+					bne $t4, 20, loop_store_item
+					
+				j item_adicionado
+
+			#FIM DO CMD_1
 			
 		erro_codigo_invalido:
 			la $a0, codigo_invalido
@@ -236,6 +320,26 @@
 			syscall
 			break_line
 			j main
+			
+		erro_item_ja_cadastrado:
+			la $a0, item_ja_cadastrado
+			li $v0, 4
+			syscall
+			break_line
+			j main
+			
+		item_adicionado:
+			la $a0, item_adicionado_string
+			li $v0, 4
+			syscall
+			break_line
+			j main
+			
+		cancela_hifen_cmd1:
+				addi $t7, $t7, 1
+			j loop_store_item
+			
+			
 			
 		cmd_2_true: #Comando "cardapio_rm"
 			li $a0, 2
@@ -354,11 +458,5 @@ end_strcmp:
 	jr $ra             # Retorna
 	
 	
-
-
-
-
-
-
 
 
