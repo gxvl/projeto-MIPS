@@ -155,6 +155,8 @@
 
 	main:
 	
+		jal limpar_buffer
+		
 		la $a0, banner #imprime banner no terminal
 		addi $v0, $0, 4
 		syscall
@@ -264,7 +266,7 @@
 			la $s1, itens_memoria #adiciona espaço reservado para itens em $s1
 		
 			addi $s0, $s0, 12 #vai para o <option 1> na string no usuário
-			move $t5, $s0 #salva $s0 atual (sem o "cardapio_ad-") em $s2
+			move $t5, $s0 #salva $s0 atual (sem o "cardapio_ad-") em $t5
 			lb $t0, 0($s0) #carrega o primeiro byte da string(código do item)
 			subi $t0, $t0, 48 #subtrai 48 do primeiro byte (transforma em decimal)
 			lb $t4, 1($s0) #carrega o segundo byte da string(código do item)
@@ -406,6 +408,7 @@
 					addi $t4, $t4, 1  #adiciona no acumulador
 					bne $t4, 20, loop_store_item
 					
+				
 				j item_adicionado
 
 			#FIM DO CMD_1
@@ -715,7 +718,20 @@ end_strcmp:
 	li $v0, 0         # Define o resultado como 0 (strings são iguais)
 	jr $ra             # Retorna
 	
+limpar_buffer:
+	addi $t0, $0, 0 #acumulador
+	addi $t1, $0, 0 #determina t1 como 0
 	
+	la $t7, buffer #carrega o endereço do buffer em $t7
+	
+	loop_buffer:
+		sb $t1, 0($t7) #zera próximo byte no buffer
+		
+		addi $t7, $t7, 1
+		addi $t0, $t0, 1 #incrementa 1 no acumulador
+		bne $t0, 50, loop_buffer #se o acumulador for menor que 50, loop continua
+		 
+	jr $ra
 
 
 
