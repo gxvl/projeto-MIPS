@@ -37,6 +37,7 @@
 	banner: .asciiz "pingas-shell>> "
 	
 	break_line_string: .asciiz "\n"
+	break_line_string: .asciiz "-"
 	passou_teste_string: .asciiz "Passou!"
 	
 
@@ -45,6 +46,13 @@
 	addi $v0, $0, 4
 	syscall
 .end_macro 
+
+.macro print_dash # macro para imprimir um hifen
+	la $a0, dash_string
+	addi $v0, $0, 4
+	syscall
+.end_macro 
+	
 
 .macro passou_teste # macro para imprimir uma quebra de linha
 	la $a0, passou_teste_string
