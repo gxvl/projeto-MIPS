@@ -37,7 +37,7 @@
 	banner: .asciiz "pingas-shell>> "
 	
 	break_line_string: .asciiz "\n"
-	break_line_string: .asciiz "-"
+	dash_string: .asciiz "-"
 	passou_teste_string: .asciiz "Passou!"
 	
 
